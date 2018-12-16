@@ -852,7 +852,18 @@ var eton = (function(eton, $) {
                         ;
                     }
                 }
-                if (plugin.settings.no_limit_no_show == "noshow" && (!limit || limit.limit_type == "none")) {
+                
+                function wordcountallowed(currentboard, allowedboards)
+                {
+                    return $.inArray(currentboard.toString(), allowedboards) != -1;
+                }
+
+                if (
+                    (plugin.settings.no_limit_no_show == "noshow" && (!limit || limit.limit_type == "none"))
+                    || ( plugin.settings.show_only_in_selected_boards=="enableselectedboards"
+                        && !wordcountallowed(yootil.page.board.id(), plugin.settings.show_in_boards) ) )
+                 {
+                    
                     if (logger.limit) {
                         console.log(pluglog + 'The "Show counter only when there\'s a limit" option is enabled and no limit exists. Hiding counter')
                     }
