@@ -12,7 +12,6 @@ var eton = (function(eton, $) {
         })
         return verA_isNewer ? verA : verB
     }
-      , callback = {}
       , stat_providers = {}
       , alone = function() {
         if ($('span[id="wordcount-plugin"]').length > 1) {
@@ -113,155 +112,6 @@ var eton = (function(eton, $) {
                     }
                 }
                 $(function() {
-                    var pD = window.pixeldepth
-                      , y = window.yootil;
-                    function $format(amt) {
-                        if (!$.isNumeric(amt))
-                            return amt;
-                        var moni = $('<span>' + pb.plugin.get('pixeldepth_monetary').settings.money_symbol + '</span>').text() + Math.abs(amt).toFixed(2);
-                        if (!pb.plugin.get('pixeldepth_monetary').settings.decimal_money)
-                            moni = moni.replace(/\.\d\d$/, '')
-                        if (amt < 0)
-                            moni = '(' + moni + ')';
-                        return moni;
-                    }
-                    if (pD && pD.monetary) {
-                        var apm = pD.monetary.apply_posting_money;
-                        pD.monetary.apply_posting_money = function(e, f) {
-                            try {
-                                if (!pD.monetary.can_earn_money
-                                    || !pD.monetary.can_earn_in_cat_board()
-                                    || !pD.monetary.can_earn()
-                                    || (proboards.data("page").thread ?
-                                        wordcount_data.getAutoformByField(pixeldepth.monetary.settings.no_earn_threads, 'thread_id', proboards.data("page").thread.id)
-                                        : false)) {
-                                    return !1
-                                };
-                                var hasValidation = 
-                                (
-                                    validation
-                                    && (validation.opts.min_length
-                                        || validation.opts.min_char_length
-                                        || validation.opts.max_length
-                                        || validation.opts.max_char_length)
-                                );
-                                if (plugin.settings.enable_monetary
-                                    && plugin.settings.enable_monetary.length
-                                    && plugin.settings.word_up.length
-                                    && ("money_on_limits_only" !== plugin.settings.enable_monetary || hasValidation)) {
-                                    var cid = y.page.category.id(),
-                                    bid = y.page.board.id(),
-                                    amounts = pD.monetary.settings.posting.amounts.boards[bid]
-                                        || pD.monetary.settings.posting.amounts.categories[cid]
-                                        || pD.monetary.settings.posting.amounts,
-                                    wcount = hasValidation
-                                        && (validation.opts.min_char_length
-                                            || validation.opts.max_char_length) ?
-                                                lengthcount
-                                                : wordcount,
-                                    l = plugin.settings.word_up.sort(function(a, b) {
-                                        if (isNaN(a.min_words) || isNaN(b.min_words)) {
-                                            return 0;
-                                        }
-                                        return b.min_words - a.min_words;
-                                    }), a;
-                                    if (amounts) {
-                                        var m = "per_", c = 0, d
-                                        if (!pD.monetary.is_editing && !pD.monetary.is_new_thread) {
-                                            if (pD.monetary.using_quick_reply) {
-                                                m = "per_quick_reply";
-                                                c += Number(amounts[m]);
-                                            } else {
-                                                m = "per_reply";
-                                                c += Number(amounts[m]);
-                                            }
-                                        }
-                                        if (pD.monetary.is_poll) {
-                                            c += Number(amounts.per_poll)
-                                        }
-                                        if (pD.monetary.is_new_thread) {
-                                            m = "per_thread";
-                                            c += Number(amounts[m])
-                                        }
-                                        var newmoney;
-                                        if (plugin.settings.money_mode == "bonus") {
-                                            if ($.inArray("bonus", callback.money_mode) != -1
-                                            && "function" == typeof callback.handler
-                                            && $.isNumeric(newmoney = callback.handler.call(pD.monetary, wordcount_data, m, c, l))) {
-                                                newmoney = Number(newmoney)
-                                                pD.monetary.data(y.user.id())[newmoney >= 0 ? "increase" : "decrease"].money(Math.abs(newmoney), false);
-                                                log('(BONUS MODE) adding an extra ' + $format(newmoney) + ' to the ' + $format(c) + ' already being given for this post', logger.compat)
-                                                $.each(["forum", "category", "board", "thread"], function(scope_index, scope_value) {
-                                                    if (callback.queue[scope_value]) {
-                                                        for (var a = (scope_index == callback.money_scope ? 1 : 0); a < callback.queue[scope_value].length; a++) {
-                                                            log('calling secondary callback #' + scope_index + ' (scope:' + scope_value + ')', logger.compat)
-                                                            callback.queue[scope_value][a].call(pD.monetary, wordcount_data, m, c, l);
-                                                        }
-                                                    }
-                                                })
-                                            } else {
-                                                $.each(l, function(j, k) {
-                                                    if (this.min_words <= wcount) {
-                                                        if (isNaN(this.money) || isNaN(this.min_words)) {
-                                                            return true;
-                                                        }
-                                                        if (this.money < 0 && this.min_words >= 0) {
-                                                            return true;
-                                                        }
-                                                        pD.monetary.data(y.user.id()).increase.money(Number(this.money), true);
-                                                        if (logger.compat) {
-                                                            console.log(pluglog + '(BONUS MODE) adding an extra ' + $format(this.money) + ' to the ' + $format(c) + ' already being given for this post')
-                                                        }
-                                                        return false;
-                                                    }
-                                                })
-                                            }
-                                        } else if (plugin.settings.money_mode == "proportional") {
-                                            if ($.inArray("proportional", callback.money_mode) != -1
-                                            && "function" == typeof callback.handler
-                                            && $.isNumeric(newmoney = callback.handler.call(pD.monetary, wordcount_data, m, c, l))) {
-                                                pD.monetary.data(y.user.id())[newmoney >= 0 ? "increase" : "decrease"].money(Math.abs(newmoney), true);
-                                                log('(PROPORTIONAL MODE) paying ' + $format(newmoney) + ' for this post', logger.compat)
-                                                pD.monetary.data(y.user.id()).decrease.money(Math.min(amounts[m], pD.monetary.data(y.user.id()).data.m), true);
-                                                $.each(["forum", "category", "board", "thread"], function(scope_index, scope_value) {
-                                                    if (callback.queue[scope_value]) {
-                                                        for (var a = (scope_index == callback.money_scope ? 1 : 0); a < callback.queue[scope_value].length; a++) {
-                                                            log('calling secondary callback #' + scope_index + ' (scope:' + scope_value + ')', logger.compat)
-                                                            callback.queue[scope_value][a].call(pD.monetary, wordcount_data, m, c, l);
-                                                        }
-                                                    }
-                                                })
-                                            } else if (wcount && l[0].min_words > 0) {
-                                                if (hasValidation) {
-                                                    log('post has a validated limit', logger.compat)
-                                                    if (wcount < (validation.opts.min_char_length || validation.opts.min_length || wcount)) {
-                                                        log(wcount + ' is less than the ' + l[0].min_words + ' ' + (hasValidation && validation.opts.min_char_length ? 'characters' : 'words') + ' required to make this post', logger.compat)
-                                                        wcount = 0;
-                                                    } else {
-                                                        wcount = wcount - (validation.opts.min_char_length || validation.opts.min_length || 0);
-                                                        log('excess of ' + wcount + ' ' + (hasValidation && (validation.opts.min_char_length || validation.opts.max_char_length) ? 'characters' : 'words') + ' will be used to calculate payout for this post', logger.compat)
-                                                    }
-                                                } else {
-                                                    log('post has NO validated limits set on it', logger.compat);
-                                                }
-                                                d = Number((wcount / l[0].min_words * c).toFixed(2));
-                                                pD.monetary.data(y.user.id()).increase.money(d, true);
-                                                log('(PROPORTIONAL MODE) paying ' + $format(d) + ' out of ' + $format(c) + ' for this post', logger.compat)
-                                                pD.monetary.data(y.user.id()).decrease.money(Math.min(amounts[m], pD.monetary.data(y.user.id()).data.m), true)
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (t) {
-                                console.log(pluglog + 'Monetary option enabled but an error occured while calculating: "' + (t.stack) + '"')
-                            } finally {
-                                var returnVal = apm.apply(this, arguments);
-                                return returnVal;
-                            }
-                        }
-                    } else if (plugin.settings.enable_monetary) {
-                        log(pluglog + 'Monetary word count option enabled but Pixeldepth monetary plugin not detected', logger.compat)
-                    }
                 })
                 if (plugin.settings.word_regex) {
                     temp = $.trim(plugin.settings.word_regex).split("/");
@@ -1166,52 +1016,7 @@ var eton = (function(eton, $) {
         })
     }
     $.extend(wordcount_data, {
-        parser: parseEnhancedTags,
-        calc_money: function(options, func) {
-            if ("function" == typeof options) {
-                func = options;
-                options = {}
-            }
-            var opts = $.extend({
-                money_scope: ["forum"],
-                money_mode: ['bonus', 'proportional']
-            }, options)
-            if (!$.isArray(opts.money_scope)) {
-                opts.money_scope = [opts.money_scope]
-            }
-            var general_scope = ["forum", "category", "board", "thread"]
-              , callback_scope = $.inArray(opts.money_scope[0], general_scope); // default match is "forum", which returns '0'
-            if (!callback.money_scope || callback.money_scope < callback_scope) { // if callback.money_scope is null, or... 
-                                                                                    // less then an internal variable to the callback_scope
-                                                                                    // what is callback_scope's default?
-                                                                                    // Is this so we only make more specific callback levels and not less specific?
-                if (!$.isArray(opts.money_mode)) {
-                    opts.money_mode = [opts.money_mode] // coercing this to an array a second time
-                }
-                if ($.inArray(this.settings.money_mode || "bonus", // Returns money_mode if set, otherwise returns "bonus"
-                    opts.money_mode.join(" ").toLowerCase().split(" ") // forces everything into a lowercase array
-                    ) == -1) { // if the current money mode or "bonus" isn't one of those settings, we abort.
-                        return; // This is probably a sanity check? This should always pass with the default options rolling.
-                }
-                // Checkpoint 1
-                if (callback_scope > 0) { // Callback_scope is an index into general_scope
-                    if (!page[opts.money_scope[0]] // This gets page info depending on the scope (page is pb.data("page"))
-                                                    // Seems to be checking if the thing isn't there, or...
-                        || page[opts.money_scope[0]].id != opts.money_scope[1]) {
-                                                    // If the money scope doesn't match an id? Why would there be an id in here?
-                                                    // Would this let us set a callback for a specific category/board/thread or something?
-                            return callback.handler;
-                    }
-                }
-                callback.money_scope = callback_scope;
-                callback.queue = callback.queue || {}; // set to empty object if not initialized
-                callback.queue[callback_scope] = callback.queue[callback_scope] || []; // set queue to itself or init to empty array
-                callback.queue[callback_scope].push(func) // add this onto the stack
-                callback.handler = func;
-                callback.money_mode = opts.money_mode;
-            }
-            return callback.handler;
-        }
+        parser: parseEnhancedTags
     });
     return eton;
 }
