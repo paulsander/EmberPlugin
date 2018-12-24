@@ -1,3 +1,8 @@
+/*
+    Variables that still need to be excised:
+    limitmode (with associated UI options)
+    possibly user_mode
+*/
 var eton = (function(eton, $) {
     var version = '1.0.8'
       , compareVersion = function(verA, verB) {
@@ -81,12 +86,11 @@ var eton = (function(eton, $) {
                         plugin = proboards.plugin.get(plugid),
                         targetID = (plugin.settings.alternative_target_id || "word-count"),
                         wordtotal = $("#" + targetID),
-                        wmode = plugin.settings.default_mode.length ? plugin.settings.default_mode : "words",
+                        wmode = "words",
                         user = proboards.data("user"),
                         user_mode = wmode,
                         limitmode = wmode,
                         wordcount, lengthcount,
-                        apm = null,
                         validation = {},
                         logger = {
                             parse: $.inArray("debug", plugin.settings.enable_debugging) != -1,
