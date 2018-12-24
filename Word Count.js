@@ -85,8 +85,7 @@ var eton = (function(eton, $) {
                         user = proboards.data("user"),
                         user_mode = wmode,
                         limitmode = wmode,
-                        wordcount, lengthcount, nslengthcount, paragraphcount, sentencecount, syllablecount,
-                        uniquewords, complexwords, average_word_length, reading_level,
+                        wordcount, lengthcount,
                         apm = null,
                         validation = {},
                         logger = {
@@ -282,34 +281,8 @@ var eton = (function(eton, $) {
                             marginTop: "4px"
                         }).insertAfter($(quick_reply ? '.ui-resizable-s' : '.wysiwyg-tabs', $(this).parent()))
                     }
-                    var menu = $('<ul class="options_menu hide ui-menu ui-helper-clearfix ui-selectMenu" />').append('<li class="word-count-words count-mode" style="display:none;"><a><span clas="icon"></span>Words</a></li>').append('<li class="word-count-characters count-mode"><a><span clas="icon"></span>Characters</a></li>')
-                    if (plugin.settings.include_in_menu.indexOf("sentences")) {
-                        menu.append('<li class="word-count-sentences count-mode"><a><span class="icon"></span>Sentences</a></li>');
-                    }
-                    if (plugin.settings.include_in_menu.indexOf("paragraphs") != -1) {
-                        menu.append('<li class="word-count-paragraphs count-mode"><a><span class="icon"></span>Paragraphs</a></li>');
-                    }
-                    if (plugin.settings.include_in_menu.indexOf("unique") != -1) {
-                        menu.append('<li class="word-count-unique count-mode"><a><span class="icon"></span>Unique Words</a></li>');
-                    }
-                    if (plugin.settings.include_in_menu.indexOf("syllables") != -1) {
-                        menu.append('<li class="word-count-syllables count-mode"><a><span class="icon"></span>Syllables</a></li>');
-                    }
-                    if (plugin.settings.include_in_menu.indexOf("complex") != -1) {
-                        menu.append('<li class="word-count-complex count-mode"><a><span class="icon"></span>Complex Words</a></li>');
-                    }
-                    if (plugin.settings.include_in_menu.indexOf("average_word_length") != -1) {
-                        menu.append('<li class="word-count-average_word_length count-mode"><a><span class="icon"></span>Average word length</a></li>');
-                    }
-                    var reading_formulas = $.map(plugin.settings.reading_formulas, function(e, i) {
-                        return e.enable && e.formula ? e : null;
-                    })
-                    if (reading_formulas.length) {
-                        menu.append('<li class="word-count-reading_submenu count-mode"><a><span class="icon"></span>Reading Score</a><ul></ul></li>');
-                        $.each(reading_formulas, function(i, e) {
-                            menu.find('.word-count-reading_submenu ul').append('<li class="word-count-reading_level count-mode formula-' + i + '" data-formula="' + e.formula + '" data-reading-information="' + e.information + '" ><a><span class="icon"></span>' + e.name + '</a>' + (e.information ? '<ul><li class="word-count-formula_info count-mode" data-formula-info="' + e.information + '"><a><span class="icon"></span>About</a></li></ul>' : '') + '</li>');
-                        })
-                    }
+                    var menu = $('<ul class="options_menu hide ui-menu ui-helper-clearfix ui-selectMenu" />')
+                        .append('<li class="word-count-words count-mode" style="display:none;"><a><span clas="icon"></span>Words</a></li>');
                     menu.insertBefore(quick_reply ? document.body.lastChild : wordmenu).selectMenu({
                         container: wordmenu[0],
                         status: '<span id="word-count"></span>',
@@ -317,9 +290,6 @@ var eton = (function(eton, $) {
                         beforeShow: function() {
                             menu.addClass('open-menu');
                             $(this).menu('showAllOptions')
-                            if ("reading_level" != user_mode) {
-                                $(this).menu('hideOption', 'word-count-' + user_mode);
-                            }
                             return true;
                         },
                         onClose: function() {
@@ -328,26 +298,6 @@ var eton = (function(eton, $) {
                         select0: function() {
                             $(this).menu('collapseAll');
                             wordmenu.focus();
-                        },
-                        menuOptions: {
-                            click: function(e, ui) {
-                                var mode = user_mode;
-                                if (/word-count-(words|characters|sentences|paragraphs|nscharacters|unique|complex|syllables|average_word_length|reading_level|formula_info)/.test($(ui.item).attr("class"))) {
-                                    if (proboards.is_valid_url($(ui.item).attr('data-formula-info'))) {
-                                        window.open($(ui.item).attr('data-formula-info'), "_blank");
-                                        return
-                                    }
-                                    user_mode = wordcount_data.mode = RegExp.$1;
-                                    if (mode !== user_mode || "reading_level" == user_mode) {
-                                        if ("reading_level" == user_mode) {
-                                            wordcount_data.last_reading_formula = plugin.settings.reading_formulas[$(ui.item).idFromClass('formula')];
-                                        }
-                                        wordmenu.removeClass('mode-word mode-char mode-sent mode-para mode-nsch mode-comp mode-aver mode-uniq mode-syll mode-read').addClass('mode-' + user_mode.substr(0, 4))
-                                        $(WYSIWYG.editors[WYSIWYG.currentEditorName].editable).trigger('keyup.wordcount');
-                                    }
-                                }
-                                $(ui.item).trigger('mouseleave');
-                            }
                         }
                     });
                 }
@@ -390,77 +340,11 @@ var eton = (function(eton, $) {
                             lengthcount = wordcount_data.last_length_count = txt.replace(/[\n\r]/g, '').length;
                             var wct = txt.match(wordcount_regex);
                             wordcount = wordcount_data.last_word_count = (wct ? wct.length : 0);
-                            switch (user_mode) {
-                            case "paragraphs":
-                                paragraphcount = wordcount_data.last_paragraph_count = txt.split(/\n+/).length;
-                                break;
-                            case "nscharacters":
-                            case "reading_level":
-                                nslengthcount = wordcount_data.last_length_count_nospace = txt.replace(/[\n\r]/g, '').split(/\s+/).join("").length;
-                                if (user_mode == "nscharacters") {
-                                    break;
-                                }
-                            case "sentences":
-                                sentencecount = wordcount_data.last_sentence_count = txt.replace(/"/gi, "").split(/[.?!:\n]+/).length;
-                                if (user_mode == "sentences") {
-                                    break;
-                                }
-                            case "syllables":
-                                syllablecount = wordcount_data.last_syllable_count = count_syllables(txt);
-                                if (user_mode == "syllables") {
-                                    break;
-                                }
-                            case "unique":
-                            case "average_word_length":
-                            case "complex":
-                                complexwords = [];
-                                uniquewords = wordcount_data.last_unique_words_count = (function(wordlist) {
-                                    for (var a = 0, b = wordlist.length, c = []; a < b; a++) {
-                                        c[wordlist[a]] = 1;
-                                        if (user_mode === "complex") {
-                                            if (wordlist[a].length > 2 && count_syllables(wordlist[a]) > plugin.settings.complex_words) {
-                                                wordcount_data.last_complex_count = complexwords.push(wordlist[a]);
-                                            }
-                                        }
-                                    }
-                                    a = Object.keys(c);
-                                    b = a.length
-                                    return average_word_length = Number(a.join("").length / b).toFixed(2),
-                                    b;
-                                }
-                                )(wct);
-                                wordcount_data.avg_word_length = average_word_length || 0;
-                                if (user_mode == "unique" || user_mode == "average_word_length" || user_mode == "complex") {
-                                    break;
-                                }
-                            case "reading_level":
-                                reading_level = wordcount_data.last_reading_level = (Function('wordCount', 'sentenceCount', 'syllableCount', 'complexCount', 'letterNumberCount', 'return ' + (wordcount_data.last_reading_formula ? wordcount_data.last_reading_formula.formula : '-1')))(wordcount, sentencecount, syllablecount, wordcount_data.last_complex_count || 0, nslengthcount);
-                                wordtotal.attr('data-reading-score', (wordcount_data.last_reading_formula ? wordcount_data.last_reading_formula.name : 'Unknown Plugin Formula'));
-                                if (!isNaN(reading_level))
-                                    reading_level = Number(reading_level).toFixed(2)
-                            }
                             count = ({
                                 words: wordcount,
                                 characters: lengthcount,
-                                sentences: sentencecount,
-                                paragraphs: paragraphcount,
-                                unique: uniquewords,
-                                nscharacters: nslengthcount,
-                                average_word_length: average_word_length,
-                                reading_level: reading_level,
-                                syllables: syllablecount,
-                                complex: wordcount_data.last_complex_count || 0
                             })[user_mode]
                             wordtotal.html($.isNumeric(count) && count >= 1000 ? pb.number.commify(count) : count);
-                            function count_syllables(word) {
-                                word = word.toLowerCase();
-                                if (word.length <= 2) {
-                                    return 1;
-                                }
-                                word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
-                                word = word.replace(/^y/, '');
-                                return /[aeiouy]/.test(word) ? word.match(/[aeiouy]{1,2}/g).length : 1;
-                            }
                         }
                     })
                     if (plugin.settings.paste_html == "paste" && editor.name == "Visual")
