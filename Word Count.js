@@ -708,10 +708,8 @@ var eton = (function(eton, $) {
                     return $.inArray(currentboard.toString(), allowedboards) != -1;
                 }
 
-                if (
-                    (plugin.settings.no_limit_no_show == "noshow" && (!limit || limit.limit_type == "none"))
-                    || ( plugin.settings.show_only_in_selected_boards=="enableselectedboards"
-                        && !wordcountallowed(yootil.page.board.id(), plugin.settings.show_in_boards) ) )
+                if (plugin.settings.no_limit_no_show == "noshow"
+                    && (!limit || limit.limit_type == "none"))
                  {
                     
                     if (logger.limit) {
