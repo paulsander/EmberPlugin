@@ -36,8 +36,6 @@ if (typeof ember == "undefined")
 		},
 
 		ready: function() {
-			var eton = window.eton;
-			eton.eton_word_count.calc_money({}, this.wordcountcallback);
 		},
 
 		calc_exp: function(post_count) {
@@ -50,12 +48,33 @@ if (typeof ember == "undefined")
 
 			return (calculated_value > minimum_amt) ? calculated_value : minimum_amt;
 		},
+		getUserData: function(id)
+		{
+			var data = yootil.key.get_key(ember.keyID).get(id);
 
+			data = typeof data == "object" ? data : {};
+
+			data.last_posted_timestamp =  parseInt(data.last_posted_timestamp) || 0;
+			data.posts_this_month = parseInt(data.posts_this_month) || 0;
+
+			return data;
+		},
+		saveUserData: function(data, id)
+		{
+			return yootil.key.set(ember.keyID, data, id);
+		},
+		checkMonthChanged: function(firstDate, secondData)
+		{
+			return !(firstDate.getMonth() == secondData.getMonth()
+				&& firstData.getFullYear() == secondDate.getFullYear());
+		},
 		// 'this' is the monetary plug-in
 		// 'm' might be posting mode? Full thread, full reply, quick reply?
 		// 'c' is the current amount of points already being awarded
 		// 'l' is 'plugin.settings.word_up.sort(function(a, b) {...}'
 		// return value is the amount of bonus exp to award.
+		// ** DEPRICATED **: This is sticking around to keep the logic for reference
+		// but will be removed eventually.
 		wordcountcallback: function(wordcount_data, m, c, l) {
 			for(var propname in wordcount_data)
 			{
@@ -64,41 +83,23 @@ if (typeof ember == "undefined")
 				if (wordcount_data.last_word_count < word_count_threshold) {
 					return 0;
 				}
-
-				// Get and setup all of our data.
-				var user_key = yootil.key.get_key(ember.keyID);
 				
-				var user_data = user_key.get();
+				var user_data = ember.getUserData();
 
-				// Clean up data, in necessary;
-				if ("object" != typeof user_data)
-				{
-					user_data = {};
-				}
-
-				var temp1 = parseInt(user_data.last_posted_timestamp);
-				user_data.last_posted_timestamp = temp1 ? temp1 : 0;
-
-				var temp2 = parseInt(user_data.posts_this_month);
-				user_data.posts_this_month = temp2 ? temp2 : 0;
-				
 				// Next we check the timestamp and see if we need to reset the post count...
 				var last_posted_date = new Date(user_data.last_posted_timestamp);
 				
 				var current_post_date = new Date();
 
-				if (!(last_posted_date.getMonth() == current_post_date.getMonth()
-					&& last_posted_date.getFullYear() == current_post_date.getFullYear()))
-				{
-					user_key.posts_this_month = 0;
-				}
+				if (ember.checkMonthChanged(current_post_date, last_posted_date))
+					user_data.posts_this_month = 0;
 
 				var newexp = ember.calc_exp(user_data.posts_this_month);
 
 				user_data.last_posted_timestamp = current_post_date.getTime();
 				user_data.posts_this_month++;
 
-				yootil.key.set(ember.keyID, user_data);
+				ember.saveUserData(user_data);
 
 				return newexp;
 			}
