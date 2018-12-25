@@ -17,7 +17,6 @@ var eton = (function(eton, $) {
         })
         return verA_isNewer ? verA : verB
     }
-      , stat_providers = {}
       , alone = function() {
         if ($('span[id="wordcount-plugin"]').length > 1) {
             if (eton['eton_word_count']) {
