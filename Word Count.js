@@ -16,7 +16,8 @@ var eton = (function(eton, $) {
             }
         })
         return verA_isNewer ? verA : verB
-    }
+    },
+        callback = {}
       , alone = function() {
         if ($('span[id="wordcount-plugin"]').length > 1) {
             if (eton['eton_word_count']) {
@@ -343,6 +344,12 @@ var eton = (function(eton, $) {
                             lengthcount = wordcount_data.last_length_count = txt.replace(/[\n\r]/g, '').length;
                             var wct = txt.match(wordcount_regex);
                             wordcount = wordcount_data.last_word_count = (wct ? wct.length : 0);
+                            if($.isArray(callback.count_changed))
+                            {
+                                $.each(callback.count_changed, function(i, f) {
+                                    if (typeof f == "function") f(wordcount);
+                                })
+                            }
                             count = ({
                                 words: wordcount,
                                 characters: lengthcount,
@@ -901,7 +908,17 @@ var eton = (function(eton, $) {
         })
     }
     $.extend(wordcount_data, {
-        parser: parseEnhancedTags
+        parser: parseEnhancedTags,
+        /*
+            This callback takes a single parameter, the current integer word count of the current post.
+        */
+        add_count_changed_callback: function (func)
+        {
+            if (typeof func != "function") return;
+
+            callback.count_changed = $.isArray(callback.count_changed) ? callback.count_changed : [];
+            callback.count_changed.push(func);
+        }
     });
     return eton;
 }
