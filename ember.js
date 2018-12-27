@@ -6,7 +6,8 @@
 	Javascript object format
 	{
 		last_posted_timestamp: <number>,
-		posts_this_month: <number>
+		posts_this_month: <number>,
+		experience: <number>
 	}
 */
 
@@ -16,6 +17,7 @@ if (typeof ember == "undefined")
 		images: {},
 		settings: {},
 		keyID: "ember_data",
+		processed: false,
 
 		init: function(){
 			if(this.setup()) {
@@ -36,6 +38,56 @@ if (typeof ember == "undefined")
 		},
 
 		ready: function() {
+			// So the first thing we'll do is check and see if we need to bind on the submit action
+			var the_form;
+
+			if(yootil.location.posting()){
+				the_form = yootil.form.post();
+			} else if(yootil.location.thread()){
+				the_form = yootil.form.post_quick_reply();
+			}
+			
+			var currentboard = yootil.page.board.id();
+			var ic_areas = this.settings.ic_areas;
+
+			if(!this.processed
+				&& the_form && the_form.length
+				&& $.inArray(currentboard.toString(), ic_areas) != -1){
+				the_form.bind("submit", function(event) {
+					this.processed = true;
+					if(typeof eton == "undefined" || typeof eton.eton_word_count == "undefined" )
+					{
+						console.log(">> Word count plugin not installed!");
+						return;
+					}
+		
+					var wordcount = eton.eton_word_count.last_word_count;
+					// If the post isn't over the threshold don't even start.
+					var word_count_threshold = parseInt(ember.settings.word_count_threshold);
+					if (wordcount < word_count_threshold) {
+						return;
+					}
+					
+					var user_data = ember.getUserData();
+		
+					// Next we check the timestamp and see if we need to reset the post count...
+					var last_posted_date = new Date(user_data.last_posted_timestamp);
+					
+					var current_post_date = new Date();
+		
+					if (ember.checkMonthChanged(current_post_date, last_posted_date))
+						user_data.posts_this_month = 0;
+		
+					var newexp = ember.calc_exp(user_data.posts_this_month);
+		
+					user_data.last_posted_timestamp = current_post_date.getTime();
+					user_data.posts_this_month++;
+					user_data.experience += newexp;
+		
+					ember.saveUserData(user_data);
+		
+				})
+			}
 		},
 
 		calc_exp: function(post_count) {
@@ -56,6 +108,7 @@ if (typeof ember == "undefined")
 
 			data.last_posted_timestamp =  parseInt(data.last_posted_timestamp) || 0;
 			data.posts_this_month = parseInt(data.posts_this_month) || 0;
+			data.experience = parseInt(data.experience) || 0;
 
 			return data;
 		},
@@ -63,10 +116,10 @@ if (typeof ember == "undefined")
 		{
 			return yootil.key.set(ember.keyID, data, id);
 		},
-		checkMonthChanged: function(firstDate, secondData)
+		checkMonthChanged: function(firstDate, secondDate)
 		{
-			return !(firstDate.getMonth() == secondData.getMonth()
-				&& firstData.getFullYear() == secondDate.getFullYear());
+			return !(firstDate.getMonth() == secondDate.getMonth()
+				&& firstDate.getFullYear() == secondDate.getFullYear());
 		},
 		// 'this' is the monetary plug-in
 		// 'm' might be posting mode? Full thread, full reply, quick reply?
