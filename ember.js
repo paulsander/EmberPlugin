@@ -29,11 +29,12 @@ if (typeof ember == "undefined")
 			var plugin = pb.plugin.get("ember_rp_system");
 			
 			if(plugin) {
-					this.settings = plugin.settings;
-					this.images = plugin.images;
+				this.settings = plugin.settings;
+				this.images = plugin.images;
 				
-			return true;
+				return true;
 			}
+
 			return false;
 		},
 
@@ -58,6 +59,7 @@ if (typeof ember == "undefined")
 				})
 			}
 		},
+
 		apply_experience: function() {
 			this.processed = true;
 			if(typeof eton == "undefined" || typeof eton.eton_word_count == "undefined" )
@@ -102,6 +104,7 @@ if (typeof ember == "undefined")
 
 			return (calculated_value > minimum_amt) ? calculated_value : minimum_amt;
 		},
+
 		getUserData: function(id)
 		{
 			var data = yootil.key.get_key(ember.keyID).get(id);
@@ -114,10 +117,12 @@ if (typeof ember == "undefined")
 
 			return data;
 		},
+
 		saveUserData: function(data, id)
 		{
 			return yootil.key.set(ember.keyID, data, id);
 		},
+		
 		checkMonthChanged: function(firstDate, secondDate)
 		{
 			return !(firstDate.getMonth() == secondDate.getMonth()
