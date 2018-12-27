@@ -54,40 +54,42 @@ if (typeof ember == "undefined")
 				&& the_form && the_form.length
 				&& $.inArray(currentboard.toString(), ic_areas) != -1){
 				the_form.bind("submit", function(event) {
-					this.processed = true;
-					if(typeof eton == "undefined" || typeof eton.eton_word_count == "undefined" )
-					{
-						console.log(">> Word count plugin not installed!");
-						return;
-					}
-		
-					var wordcount = eton.eton_word_count.last_word_count;
-					// If the post isn't over the threshold don't even start.
-					var word_count_threshold = parseInt(ember.settings.word_count_threshold);
-					if (wordcount < word_count_threshold) {
-						return;
-					}
-					
-					var user_data = ember.getUserData();
-		
-					// Next we check the timestamp and see if we need to reset the post count...
-					var last_posted_date = new Date(user_data.last_posted_timestamp);
-					
-					var current_post_date = new Date();
-		
-					if (ember.checkMonthChanged(current_post_date, last_posted_date))
-						user_data.posts_this_month = 0;
-		
-					var newexp = ember.calc_exp(user_data.posts_this_month);
-		
-					user_data.last_posted_timestamp = current_post_date.getTime();
-					user_data.posts_this_month++;
-					user_data.experience += newexp;
-		
-					ember.saveUserData(user_data);
-		
+						ember.apply_experience();	
 				})
 			}
+		},
+		apply_experience: function() {
+			this.processed = true;
+			if(typeof eton == "undefined" || typeof eton.eton_word_count == "undefined" )
+			{
+				console.log(">> Word count plugin not installed!");
+				return;
+			}
+
+			var wordcount = eton.eton_word_count.last_word_count;
+			// If the post isn't over the threshold don't even start.
+			var word_count_threshold = parseInt(ember.settings.word_count_threshold);
+			if (wordcount < word_count_threshold) {
+				return;
+			}
+			
+			var user_data = ember.getUserData();
+
+			// Next we check the timestamp and see if we need to reset the post count...
+			var last_posted_date = new Date(user_data.last_posted_timestamp);
+			
+			var current_post_date = new Date();
+
+			if (ember.checkMonthChanged(current_post_date, last_posted_date))
+				user_data.posts_this_month = 0;
+
+			var newexp = ember.calc_exp(user_data.posts_this_month);
+
+			user_data.last_posted_timestamp = current_post_date.getTime();
+			user_data.posts_this_month++;
+			user_data.experience += newexp;
+
+			ember.saveUserData(user_data);
 		},
 
 		calc_exp: function(post_count) {
