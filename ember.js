@@ -122,42 +122,6 @@ if (typeof ember == "undefined")
 		{
 			return !(firstDate.getMonth() == secondDate.getMonth()
 				&& firstDate.getFullYear() == secondDate.getFullYear());
-		},
-		// 'this' is the monetary plug-in
-		// 'm' might be posting mode? Full thread, full reply, quick reply?
-		// 'c' is the current amount of points already being awarded
-		// 'l' is 'plugin.settings.word_up.sort(function(a, b) {...}'
-		// return value is the amount of bonus exp to award.
-		// ** DEPRICATED **: This is sticking around to keep the logic for reference
-		// but will be removed eventually.
-		wordcountcallback: function(wordcount_data, m, c, l) {
-			for(var propname in wordcount_data)
-			{
-				// If the post isn't over the threshold don't even start.
-				var word_count_threshold = parseInt(ember.settings.word_count_threshold);
-				if (wordcount_data.last_word_count < word_count_threshold) {
-					return 0;
-				}
-				
-				var user_data = ember.getUserData();
-
-				// Next we check the timestamp and see if we need to reset the post count...
-				var last_posted_date = new Date(user_data.last_posted_timestamp);
-				
-				var current_post_date = new Date();
-
-				if (ember.checkMonthChanged(current_post_date, last_posted_date))
-					user_data.posts_this_month = 0;
-
-				var newexp = ember.calc_exp(user_data.posts_this_month);
-
-				user_data.last_posted_timestamp = current_post_date.getTime();
-				user_data.posts_this_month++;
-
-				ember.saveUserData(user_data);
-
-				return newexp;
-			}
 		}
 	};
 
