@@ -16,6 +16,8 @@ if (typeof ember == "undefined")
 	ember = {
 		images: {},
 		settings: {},
+		route: null,
+		params: null,
 		keyID: "ember_data",
 		processed: false,
 
@@ -31,7 +33,9 @@ if (typeof ember == "undefined")
 			if(plugin) {
 				this.settings = plugin.settings;
 				this.images = plugin.images;
-				
+				this.route = (proboards.data("route") && proboards.data("route").name) ? proboards.data("route").name.toLowerCase() : "";
+				this.params = (this.route && proboards.data("route").params) ? proboards.data("route").params : "";
+
 				return true;
 			}
 
@@ -39,6 +43,17 @@ if (typeof ember == "undefined")
 		},
 
 		ready: function() {
+			// Check for profile/miniprofile replacements
+			var location_check = (yootil.location.search_results() || yootil.location.message_thread() || yootil.location.thread() || yootil.location.recent_posts());
+			if (location_check) {
+				this.show_in_mini_profile();
+				yootil.ajax.after_search(this.show_in_mini_profile, this);
+			}
+			
+			if(yootil.location.profile_home() && this.params && this.params.user_id != "undefined"){
+				this.show_in_profile();
+			}
+
 			// So the first thing we'll do is check and see if we need to bind on the submit action
 			var the_form;
 
@@ -122,7 +137,78 @@ if (typeof ember == "undefined")
 		{
 			return yootil.key.set(ember.keyID, data, id);
 		},
-		
+
+		show_in_mini_profile: function()
+		{
+			var minis = $("div.mini-profile");
+
+			if(minis && minis.length){
+				// There's a refresh call here in the original I'm not sure is necessary
+				
+				minis.each(function() {
+					// Looks like we're doing some scraping to get user IDs.
+					var user_link = $(this).find("a.user-link[href*='user']:first");
+
+					if(user_link && user_link.length){
+						var user_id_match = user_link.attr("href").match(/\/user\/(\d+)\/?/i);
+
+						if(user_id_match && user_id_match.length ==2) {
+							var user_id = parseInt(user_id_match[1]);
+
+							if (!user_id){
+								return;
+							}
+
+							var user_exp = ember.getUserData(user_id).experience;
+
+							ember.custom_experience_tpl($(this), user_exp, "", user_id, self)
+						}
+					}
+				})
+			}
+		},
+
+		show_in_profile: function(){
+			var user_exp = ember.getUserData(this.params.user_id).experience;
+
+			// We need an edit image. Get to that next.
+			console.log(">> edit image not set up in show_in_propfile");
+			var edit_image = "";
+
+			if(!this.is_allowed_to_edit_exp()) {
+				edit_image = "";
+			}
+
+			var container = $("div.container.show-user");
+			
+			this.custom_experience_tpl(container, user_exp, edit_image, this.params.user_id, this);
+		},
+
+		is_allowed_to_edit_exp: function() {
+			if (!yootil.user.logged_in() || !yootil.user.is_staff()){
+				return false;
+			}
+
+			if (!yootil.user.is_staff()) {
+				return true;
+			}
+		},
+
+		custom_experience_tpl: function(container, user_exp, edit_image, user_id, context) {
+			var exp_cust = container.find(".ember_exp_amount");
+
+			if(exp_cust.length)
+			{
+				exp_cust.append(user_exp + edit_image).addClass("ember_exp_amount" + user_id);
+				if (edit_image)
+				{
+					console.log(">> Editing functionality not implemented yet.");
+				}
+			}
+
+			
+		},
+
 		checkMonthChanged: function(firstDate, secondDate)
 		{
 			return !(firstDate.getMonth() == secondDate.getMonth()
