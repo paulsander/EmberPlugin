@@ -1,0 +1,100 @@
+.ember-editing-container {
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    grid-template-rows: repeat(6, auto);
+    grid-template-areas:
+  	    "addremexpttl   addremexpttl	addremexpttl	addremexpttl	addremexpttl"
+        ".              remexpbtn		addremexpfld	addexpbtn		.			"
+        "hr				hr				hr				hr				hr			"
+        "advancedttl	advancedttl		advancedttl		advancedttl		advancedttl	"
+        "setexpttl		setexpttl		setexpttl		setexpttl		setexpttl	"
+        ".				.				setexpfld		setexpbtn		.			";
+        /*"postcountttl	postcountttl	postcountttl	postcountttl	postcountttl"
+        "rempostexpbtn	rempostbtn		postcountfld	addpostbtn		addpostexpbtn"
+        ".				.				setpostbtn		.				.			";*/
+    grid-gap: 10px;
+    padding: 10px;
+}
+
+.ember-editing-container > div {
+    /*text-align: center;*/
+    /*padding: 20px 0;/*
+    /*font-size: 30px;*/
+}
+
+.ember-editing-container input {
+    width: 50px;
+}
+
+.ember-editing-container button {
+    width: 75px;
+}
+
+.ember-editing-container .add-remove-title {
+    grid-area: addremexpttl;
+}
+
+.ember-editing-container .remove-exp-button {
+    grid-area: remexpbtn;
+}
+
+.ember-editing-container .add-remove-exp-field {
+    grid-area: addremexpfld;
+}
+
+.ember-editing-container .add-exp-button {
+    grid-area: addexpbtn;
+}
+
+.ember-editing-container .hr {
+    grid-area: hr;
+}
+
+.ember-editing-container .advanced-title {
+    grid-area: advancedttl;
+}
+
+.ember-editing-container .set-exp-title {
+    grid-area: setexpttl;
+}
+
+.ember-editing-container .set-exp-field {
+    grid-area: setexpfld;
+}
+
+.ember-editing-container .set-exp-button {
+    grid-area: setexpbtn;
+}
+
+.ember-editing-container .post-count-title {
+    grid-area: postcountttl;
+}
+
+.ember-editing-container .remove-post-exp-button {
+    grid-area: rempostexpbtn;
+}
+
+.ember-editing-container .remove-post-button {
+    grid-area: rempostbtn;
+}
+
+.ember-editing-container .post-count-field {
+    grid-area: postcountfld;
+}
+
+.ember-editing-container .add-post-button {
+    grid-area: addpostbtn;
+}
+
+.ember-editing-container .add-post-exp-button {
+    grid-area: addpostexpbtn;
+}
+
+.ember-editing-container .set-post-button {
+    grid-area: setpostbtn;
+}
+
+/* General */
+.section-header {
+    border-bottom: medium solid;
+}

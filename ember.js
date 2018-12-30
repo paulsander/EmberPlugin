@@ -172,8 +172,7 @@ if (typeof ember == "undefined")
 			var user_exp = ember.getUserData(this.params.user_id).experience;
 
 			// We need an edit image. Get to that next.
-			console.log(">> edit image not set up in show_in_propfile");
-			var edit_image = "";
+			var edit_image = `<img class='exp-edit-image' src='${this.images.pencil}' title='Edit' />`;
 
 			if(!this.is_allowed_to_edit_exp()) {
 				edit_image = "";
@@ -184,12 +183,96 @@ if (typeof ember == "undefined")
 			this.custom_experience_tpl(container, user_exp, edit_image, this.params.user_id, this);
 		},
 
+		bind_edit_dialog: function(element, user_id, update_selector, edit_image)
+		{
+			var self = this;
+			var title = "Experience";
+
+			element = $(element);
+
+			if (yootil.key.write(ember.keyID, user_id) && yootil.user.is_staff() && this.is_allowed_to_edit_exp()) {
+				var edit_html = "";
+
+				edit_html += "<div class='ember-editing-container'>";
+				edit_html += "	<div class='add-remove-title'>Add/Remove Exp</div>";
+				edit_html += "	<button class='remove-exp-button' id='remove_experience'>Remove</button>";
+				edit_html += "	<input class='add-remove-exp-field' type='text' name='add_remove_experience'/>";
+				edit_html += "	<button class='add-exp-button' id='add_experience'>Add</button>";
+				
+				//edit_html += "	<hr class='hr'/>";
+				edit_html += "	<div class='advanced-title section-header'><strong>Advanced</strong></div>";
+
+				edit_html += "	<div class='set-exp-title'>Set Exp</div>";
+				edit_html += "	<input class='set-exp-field' type='text' name='set_experience'/>";
+				edit_html += "	<button class='set-exp-button' id='set_experience'>Set</button>";
+
+				edit_html += "</div>";
+
+				edit_html = $("<span />").html(edit_html);
+
+				element.click(function(event) {
+					pb.window.dialog("edit_experience", {
+						
+						title: ("Edit " + title),
+						modal: true,
+						height: 300,
+						width: 300,
+						resizeable: false,
+						draggable: false,
+						html: edit_html,
+
+						open: function() {
+							var key = "ember";
+
+							// If I wanted a prefire event I could do that here.
+						},
+
+						buttons: {
+
+							Close: function() {
+								// If I wanted to fire an event on closing I could do that here.
+								$(this).dialog("close");
+							}
+						}
+					});
+					
+					// update_callback should be a function that takes two parameters:
+					// 1) The old exp value, and
+					// 2) The new value.
+					// It retunrs the updated value.
+					function processUpdate(button_id, field_name, update_callback)
+					{
+						$(edit_html).find(`button${button_id}`).click(function() {
+							var field = $(this).parent().find(`input[name=${field_name}]`);
+							var value = parseInt(field.val());
+							if (isNaN(value)) return;
+
+							var data = ember.getUserData(user_id);
+							data.experience = update_callback(data.experience, value);
+							ember.saveUserData(data, user_id);
+
+							$(update_selector).html(data.experience + (edit_image ||""));
+						});
+					}
+
+					processUpdate("#remove_experience", "add_remove_experience", function(oldVal, newVal) { return oldVal - newVal;});
+					
+					processUpdate("#add_experience", "add_remove_experience", function(oldVal, newVal) { return oldVal + newVal;});
+					
+					processUpdate("#set_experience", "set_experience", function(oldVal, newVal) { return newVal;});
+
+				}).css("cursor", "pointer").attr("title", "Edit " + title);
+			}
+
+			return element;
+		},
+
 		is_allowed_to_edit_exp: function() {
 			if (!yootil.user.logged_in() || !yootil.user.is_staff()){
 				return false;
 			}
 
-			if (!yootil.user.is_staff()) {
+			if (yootil.user.is_staff()) {
 				return true;
 			}
 		},
@@ -199,10 +282,10 @@ if (typeof ember == "undefined")
 
 			if(exp_cust.length)
 			{
-				exp_cust.append(user_exp + edit_image).addClass("ember_exp_amount" + user_id);
+				exp_cust.append(user_exp + edit_image).addClass("ember_exp_amount_" + user_id);
 				if (edit_image)
 				{
-					console.log(">> Editing functionality not implemented yet.");
+					context.bind_edit_dialog(exp_cust, user_id, ".ember_exp_amount_" + user_id, edit_image);
 				}
 			}
 
